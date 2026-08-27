@@ -37,7 +37,7 @@ def save_memory(user_input, ai_response):
 
 def ask_gemini(prompt_text, api_key):
     if not api_key:
-        return "الرجاء إدخال مفتاح الـ API أولاً في الخانة المخصصة بالأعلى."
+        return "تنبيه: الرجاء إدخال مفتاح Gemini API أولاً في الخانة بالشيفرة بالأعلى ثم الضغط على حفظ."
 
     history = get_history()
     context = "You are Lesyos, an advanced strategic AI partner. Respond naturally, directly, and concisely in Arabic.\n"
@@ -45,21 +45,25 @@ def ask_gemini(prompt_text, api_key):
         context += f"User: {h[0]}\nLesyos: {h[1]}\n"
     context += f"User: {prompt_text}\nLesyos:"
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    # الرابط المستقر والمباشر المعتمد
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={api_key}"
     payload = {"contents": [{"parts": [{"text": context}]}]}
     headers = {'Content-Type': 'application/json'}
 
     try:
         res = requests.post(url, json=payload, headers=headers, timeout=15)
         data = res.json()
+        
         if 'candidates' in data and len(data['candidates']) > 0:
             reply = data['candidates'][0]['content']['parts'][0]['text']
             save_memory(prompt_text, reply)
             return reply
+        elif 'error' in data:
+            return f"خطأ من جوجل API: {data['error'].get('message', 'مفتاح غير صالح أو خطأ بالخادم')}"
         else:
-            return f"Error: {data.get('error', {}).get('message', 'Invalid API Key')}"
+            return "لم يتم استلام رد من السيرفر، يرجى إعادة المحاولة."
     except Exception as e:
-        return f"Network Error: {str(e)}"
+        return f"خطأ شبكة: {str(e)}"
 
 HTML_TEMPLATE = '''
 <!DOCTYPE html>
@@ -151,7 +155,7 @@ HTML_TEMPLATE = '''
                     utterance.lang = 'ar-SA';
                     utterance.rate = 1.0;
                     window.speechSynthesis.speak(utterance);
-                }, 100);
+                }, 150);
             }
         }
 
@@ -171,21 +175,25 @@ HTML_TEMPLATE = '''
             input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            const res = await fetch('/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({message: text, api_key: apiKey})
-            });
-            const data = await res.json();
-            
-            const msgElem = document.createElement('div');
-            msgElem.className = 'msg ai';
-            msgElem.innerText = data.reply;
-            msgElem.onclick = () => speakText(data.reply);
-            chatBox.appendChild(msgElem);
-            
-            chatBox.scrollTop = chatBox.scrollHeight;
-            speakText(data.reply);
+            try {
+                const res = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: text, api_key: apiKey})
+                });
+                const data = await res.json();
+                
+                const msgElem = document.createElement('div');
+                msgElem.className = 'msg ai';
+                msgElem.innerText = data.reply;
+                msgElem.onclick = () => speakText(data.reply);
+                chatBox.appendChild(msgElem);
+                
+                chatBox.scrollTop = chatBox.scrollHeight;
+                speakText(data.reply);
+            } catch (e) {
+                chatBox.innerHTML += `<div class="msg ai">حدث خطأ في الاتصال بالخادم</div>`;
+            }
         }
     </script>
 </body>
