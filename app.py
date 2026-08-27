@@ -45,8 +45,8 @@ def ask_gemini(prompt_text, api_key):
         context += f"User: {h[0]}\nLesyos: {h[1]}\n"
     context += f"User: {prompt_text}\nLesyos:"
 
-    # الاعتماد على الموديل الرسمي المتوافق مع الإصدار الحديث
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+    # الطلب بآلية خالية من اللاحقات النادرة
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
     payload = {"contents": [{"parts": [{"text": context}]}]}
     headers = {'Content-Type': 'application/json'}
 
@@ -59,19 +59,11 @@ def ask_gemini(prompt_text, api_key):
             save_memory(prompt_text, reply)
             return reply
         elif 'error' in data:
-            # تجربة رابط احتياطي بموديل 1.5 المتوافق في حال وجود تقييد على المفتاح
-            fallback_url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key={api_key}"
-            res_fb = requests.post(fallback_url, json=payload, headers=headers, timeout=15)
-            data_fb = res_fb.json()
-            if 'candidates' in data_fb and len(data_fb['candidates']) > 0:
-                reply = data_fb['candidates'][0]['content']['parts'][0]['text']
-                save_memory(prompt_text, reply)
-                return reply
-            return f"خطأ من API: {data['error'].get('message', 'يرجى التأكد من مفتاح API')}"
+            return f"خطأ API: {data['error'].get('message', 'مفتاح غير صالح')}"
         else:
-            return "لم يتم استلام رد، حاول مرة أخرى."
+            return "لم يتم استلام رد، حاول مجدداً."
     except Exception as e:
-        return f"خطأ في الاتصال: {str(e)}"
+        return f"خطأ شبكة: {str(e)}"
 
 HTML_TEMPLATE = '''
 <!DOCTYPE html>
