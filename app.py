@@ -45,7 +45,7 @@ def ask_gemini(prompt_text, api_key):
         context += f"User: {h[0]}\nLesyos: {h[1]}\n"
     context += f"User: {prompt_text}\nLesyos:"
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
     payload = {"contents": [{"parts": [{"text": context}]}]}
     headers = {'Content-Type': 'application/json'}
 
@@ -198,4 +198,3 @@ def chat():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-
