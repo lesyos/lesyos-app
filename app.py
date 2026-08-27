@@ -45,7 +45,7 @@ def ask_gemini(prompt_text, api_key):
         context += f"User: {h[0]}\nLesyos: {h[1]}\n"
     context += f"User: {prompt_text}\nLesyos:"
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
     payload = {"contents": [{"parts": [{"text": context}]}]}
     headers = {'Content-Type': 'application/json'}
 
@@ -78,7 +78,7 @@ HTML_TEMPLATE = '''
         .chat-box { flex: 1; overflow-y: auto; padding: 10px 0; display: flex; flex-direction: column; gap: 10px; }
         .msg { padding: 12px 16px; border-radius: 12px; max-width: 80%; line-height: 1.5; font-size: 0.95rem; }
         .user { align-self: flex-start; background-color: #0284c7; color: white; }
-        .ai { align-self: flex-end; background-color: #1e293b; color: #e2e8f0; border: 1px solid #334155; }
+        .ai { align-self: flex-end; background-color: #1e293b; color: #e2e8f0; border: 1px solid #334155; cursor: pointer; }
         .input-area { display: flex; gap: 8px; padding-top: 10px; }
         input[type="text"] { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: white; outline: none; }
         button { padding: 12px 16px; border-radius: 8px; border: none; background: #0284c7; color: white; font-weight: bold; cursor: pointer; }
@@ -146,9 +146,12 @@ HTML_TEMPLATE = '''
         function speakText(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'ar-SA';
-                window.speechSynthesis.speak(utterance);
+                setTimeout(() => {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'ar-SA';
+                    utterance.rate = 1.0;
+                    window.speechSynthesis.speak(utterance);
+                }, 100);
             }
         }
 
@@ -174,7 +177,13 @@ HTML_TEMPLATE = '''
                 body: JSON.stringify({message: text, api_key: apiKey})
             });
             const data = await res.json();
-            chatBox.innerHTML += `<div class="msg ai">${data.reply}</div>`;
+            
+            const msgElem = document.createElement('div');
+            msgElem.className = 'msg ai';
+            msgElem.innerText = data.reply;
+            msgElem.onclick = () => speakText(data.reply);
+            chatBox.appendChild(msgElem);
+            
             chatBox.scrollTop = chatBox.scrollHeight;
             speakText(data.reply);
         }
