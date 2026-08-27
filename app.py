@@ -45,8 +45,8 @@ def ask_gemini(prompt_text, api_key):
         context += f"User: {h[0]}\nLesyos: {h[1]}\n"
     context += f"User: {prompt_text}\nLesyos:"
 
-    # الطلب بآلية خالية من اللاحقات النادرة
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    # استخدام نموذج gemini-2.5-flash الرسمي الشغال حالياً
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     payload = {"contents": [{"parts": [{"text": context}]}]}
     headers = {'Content-Type': 'application/json'}
 
@@ -59,7 +59,7 @@ def ask_gemini(prompt_text, api_key):
             save_memory(prompt_text, reply)
             return reply
         elif 'error' in data:
-            return f"خطأ API: {data['error'].get('message', 'مفتاح غير صالح')}"
+            return f"خطأ API: {data['error'].get('message', 'تأكد من صحة المفتاح')}"
         else:
             return "لم يتم استلام رد، حاول مجدداً."
     except Exception as e:
